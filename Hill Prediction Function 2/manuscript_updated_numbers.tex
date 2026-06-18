@@ -1,0 +1,1104 @@
+\documentclass[11pt]{article}
+
+% ---------- Layout & typography ----------
+\usepackage[margin=1in]{geometry} 
+\usepackage{amsmath, amssymb, mathrsfs}
+\usepackage{amsthm}
+% 1in margins like many journals
+\usepackage{microtype}            % better kerning and protrusion
+\usepackage{newtxtext,newtxmath}  % Times-like text+math
+\usepackage[table]{xcolor}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{setspace}
+\setstretch{1.08}                 % a touch more leading for readability
+\usepackage[hang,small,bf]{caption}
+
+% ---------- Math & symbols ----------
+\usepackage{amsmath,amssymb,mathrsfs} % \mathscr
+\usepackage{mathtools}
+\usepackage{bm}
+
+% ---------- Figures & refs ----------
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!40!black,
+  citecolor=blue!40!black,
+  urlcolor=blue!40!black
+}
+
+% ---------- Title ----------
+\title{Physics-Informed Parameter Learning with Topological Validation}
+\author{
+Wael El Khateeb, 
+Bernardo Rivas,
+William Kalies \\ 
+Department of Mathematics and Statistics, University of Toledo. 
+}
+\date{}
+
+% newcommand
+\newcommand{\Bernardo}[1]{{\color{red}\text{[Bernardo: #1]}}}
+
+
+\newcommand{\Wael}[1]{{\color{red}\text{[Wael: #1]}}}
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Gene regulatory networks (GRNs) encode complex interactions of genes and their regulation. From the network, one may study compatible dynamical models to forecast the cellular behavior. Continuous and discontinuous models alike propose a characterization of long-term behavior, but frequently fail to bridge the gap to network dynamics. Dynamic Signature of Gene Regulatory Networks (DSGRN) proposes a combinatorial-topological approach to network dynamics which is validated for sufficiently steep continuous models. In this work, we address the question of whether machine learning methods can learn sufficiently good models from trajectory data of switching systems. We present a physics-informed neural network (PINN) approach that GRN parameters from time-series data, that is rigorously validated for a class of ODEs via DSGRN. We showcase the method on canonical examples, connecting data-driven parameter inference to combinatorial-topological guarantees.
+\end{abstract}
+\textbf{Keywords:} Gene regulatory networks, Physics-informed neural networks, DSGRN, Morse graphs, Parameter inference, Switching systems, Hill functions, Topological dynamics
+
+\section{Introduction}
+\Bernardo{I need to work on the references across the board.}\\
+
+\Wael{Do not include all L,U, Theta graphs}
+\Wael{We need to introduce the definitions of L, U, theta in section 2,\\ and bring together an explanation on why we are considering Hill over piecewise}
+
+
+\Wael{Remove Titles from above figures}
+\Wael{Remove legends, use captions to describe the figures}
+\Wael{Go over Figure 10, make sure the formulas are correct, and give credit to AI}
+
+
+\Wael{We have many definitions and notations used for the dynamics and ODEs.\\ We might need to unify them. Also, we need to consider a generalized formula that multiplies the Heaviside function, not just adds it}
+
+
+
+Mathematical models of gene regulation span from discrete Boolean networks to continuous ODEs, each addressing different aspects of the modeling problem. The main goal is to study the cellular behavior and understand its evolution in disease or treatment. Boolean networks \cite{kauffman1969} represent genes as binary variables (ON/OFF). These models enable combinatorial analysis of large networks but lack temporal resolution and quantitative parameters. Continuous ODE models traditionally use Hill functions $f(x) = \lambda\frac{x^n}{\theta^n + x^n}$ \cite{hill1910}. Piecewise-linear models \cite{glass1973,glass1975} employ Heaviside step functions, providing a hybrid approach that captures switching dynamics with discontinuous ODEs.
+
+The obvious connection between these frameworks comes in the form of a limiting behavior: as $n \to \infty$, Hill functions converge to piecewise-linear systems. For ODEs with discontinuous vector field, though, a broader concept of solution is typically considered \cite{fillipov}. For classical solutions, singular perturbation theory approaches the problem of studying how solutions of the limit shadow solutions of sufficiently steep models \cite{}. In \cite{rookfields}, the authors provide a topological characterization for sufficiently steep models. In light of that, we turn to the following question: given trajectory data, can we learn continuous models sufficiently steep such that the model produces a similar qualitative behavior to that of the discontinuous vector field?
+
+This problem encounters a few challenges. First, for large $n$, trajectories generated with high steepness values are nearly indistinguishable, creating a flat optimization landscape. Second, standard physics-informed neural networks (PINNs) exhibit spectral bias, that is, they learn low-frequency components preferentially and struggle with steep gradients. Third, trajectory-based validation metrics are insufficient for verifying asymptotic dynamics. A model can fit data while failing to preserve attractors or basin structure.
+
+We address these challenges by combining modified PINNs with DSGRN validation. We employ ..., enabling learning of Hill models or piecewise linear vector fields from trajectory data. We obtain distributions over $n$ rather than point estimates, quantifying uncertainty, given .... The Dynamic Signatures Generated by Regulatory Networks (DSGRN) framework \cite{cummins2018,rookfields} provides bounds for sufficiently steep ramp systems that enable the characterization of global dynamics. We validate learned parameters by verifying the topological characterization which is grounded by Conley index theory \cite{conley1978}.
+
+Our contributions are: (i) Modified PINN architecture that learns steepness parameters from trajectory data, (ii) DSGRN-based  validation of the learning outcomes, and (iii) Topological characterization of the global dynamics of learned models.
+
+\section{Dynamical Systems Approach to Gene Regulation}
+\label{sec:grn}
+
+Mathematical modeling of gene regulatory networks balances biological realism with computational tractability. We review modeling frameworks from Boolean networks to continuous ODEs, connecting parameter learning to topological validation.
+
+\subsection{Gene Regulatory Networks}
+A gene regulatory network is a directed graph $RN = (V, E, \delta)$ where $v_i \in V$ represent genes, transcription factors or other agents, $(v_i, v_j) \in E$ are regulatory interactions, and $\delta: E \to \{-1, +1\}$ encodes activation or repression. Network topology generally constrains dynamics \cite{}.
+
+Boolean networks \cite{kauffman1969,thomas1973} are widely used, by modeling gene states as $\sigma_i \in \{0,1\}$ with discrete-time updates:
+\begin{equation}
+  \sigma_i(t+1) = f_i(\sigma_{j_1}(t), \sigma_{j_2}(t), \ldots).
+\end{equation}
+Boolean models enable combinatorial analysis of attractors \cite{}, but lack continuous dynamics and quantitative parameters for inference from time-series data. Their inference, however, can provide insights into the expected behavior of cell regulation \cite{}. 
+
+\subsection{Dynamical Models of Gene Regulation}
+
+To bridge discrete and continuous descriptions, linear switching systems were introduced in \cite{glass1973,glass1975}. Let $x_i(t) \in \mathbb{R}_+$ denote the concentration of protein $i$ at time $t$. The dynamics are governed by
+\begin{equation}
+  \frac{dx_i}{dt} = -\gamma_i x_i + \sum_{j=1}^m s_{ij} H(\theta_{ij} - x_j),
+  \label{eq:glass}
+\end{equation}
+where $\gamma_i$ is the degradation rate, $s_{ij}$ encodes the sign and strength of regulation from gene $j$ to gene $i$, $\theta_{ij}$ are threshold concentrations, and $H(\cdot)$ is the Heaviside function:
+\begin{equation}
+  H(z) =
+  \begin{cases} 1, & z > 0, \\ 0, & z \leq 0.
+  \end{cases}
+\end{equation}
+The state space is partitioned into different \emph{modes} by the hyperplanes $\{x_j = \theta_{ij}\}$. Within each mode, the vector field is linear, and the switching occur instantaneously when trajectories cross thresholds.
+
+Another common framework is Hill models. When $i$ is being activated by $j$, the production rate is given instead by the Hill function
+\begin{equation}
+  f^+(x_j) = \frac{\lambda x_j^n}{\theta_j^n + x_j^n},
+\end{equation}
+where $\lambda$ is the maximal production rate, $\theta_j$ is the half-saturation threshold, and $n$ is the Hill coefficient. For repression, the Hill function takes the form
+\begin{equation}
+  f^-(x_j) = \frac{\lambda \theta_j^n}{\theta_j^n + x_j^n}.
+\end{equation}
+The system of a Hill model for a GRN is typically given 
+\begin{equation}
+  \frac{dx_i}{dt} = -\gamma_i x_i + p_i\left(f_{ji}(x_j) \right),
+  \label{eq:hill}
+\end{equation}
+where $p_i$ is a multilinear polynomial and $f_{ji}(x_j)$ is a Hill function that depends on the activator or repressor $x_j$ activity on the node associated to $x_i$. 
+
+The relationship between the models is intuitive: as the Hill coefficient $n \to \infty$, the Hill function converges pointwise to the Heaviside step function. Their qualitative dynamics, though, are not necessarily connected to boolean network dynamics. For that, we present a more general combinatorial framework that bridges the connection between network models and differential equations.
+
+\subsection{DSGRN: Dynamic Signature Generated by Regulatory Networks}
+
+Dynamic Signatures Generated by Regulatory Networks (DSGRN) \cite{cummins2018,cummins2019, rookfields} provides a finite, computable decomposition of parameter space for switching ODE systems of the form~\eqref{eq:glass}. The framework addresses a fundamental question: what are all possible qualitative dynamics for a given network topology?
+
+For a regulatory network $RN$, the parameter space decomposition leverages the production rates $\{\lambda_{ij}\}$, degradation rates $\{\gamma_i\}$, and thresholds $\{\theta_{ij}\}$ to organize a \emph{parameter graph} of all possible orderings of such parameters. In other words, DSGRN partitions this continuous, high-dimensional parameter space into a finite number of \textit{parameter regions} defined by explicit inequalities. 
+
+DSGRN then associates to each parameter region a topological description of the global dynamics. Specifically, to each parameter region, DSGRN assigns a \textit{Morse graph}, which is a directed acyclic grap summarizing the system's global dynamics. The construction begins with a cubical complex decomposition of phase space, defined by the threshold hyperplanes, forming a combinatorial structure that discretizes the flow. The algorithm then proceeds to
+\begin{enumerate}
+  \item Compute a multivalued map $\mathcal{F}$ that discretizes the underlying continuous dynamics using solely the parameter decomposition information. 
+  \item Identify non-trivial strongly connected components of $\mathcal{F}$ and build a \emph{Morse Graph}.
+  \item A Morse graph node $k$, namely a \emph{Morse set}, is labeled by their topological information:
+    \begin{itemize}
+      \item $FP(k)$: Fixed point (Conley index of a fixed point),
+      \item $PO(k)$: Periodic orbit (Conley index of a periodic orbit),
+      \item $T(k)$: Trivial Conley index,
+      \item $M(k)$: Mixed or other Conley index types.
+    \end{itemize}
+  \item Edges in the Morse graph represent reachability between Morse sets, encoding the basin of attraction structure.
+\end{enumerate}
+For the class of ramp systems, there are analytical bounds on the steepness of a model that are described by the network dynamics. A ramp system is an ODE of the form
+\Bernardo{using the rook fields indexing}
+$$\dot{x}_i = -\gamma_i x_i + E_i(r_{i,1}(x_1),\ldots,r_{i,N}(x_N)),$$
+where $E_i$ is a multilinear polynomial on its inputs of \emph{ramp functions} $r_{i,j}(x)$
+$$r_{i,j}(x) = \begin{cases}
+\nu_{i,j,1}, & x < \theta_{i,j} - h_{i,j} \\
+L_{i,j}(x), & \theta_{i,j} - h_{i,j} \leq x \leq \theta_{i,j} + h_{i,j} \\
+\nu_{i,j,2}, & x > \theta_{i,j} + h_{i,j}
+\end{cases}$$
+with linear interpolation $L_{i,j}(x)$. 
+
+If the ramp system parameters $(\nu,\theta,h)$ satisfy a set of transversality conditions, \cite{rookfields} establishes that the Morse graph is associated to a \emph{Morse decomposition} for the ramp system and each computed homology group is the homological Conley index for the associated isolated invariant set. These results provide a topological characterization of sufficiently steep models which is robust with respect to perturbation of the parameters and enables the study of bifurcations when parameters change. 
+\newpage
+
+\section{Examples of Gene Regulatory Networks}
+
+We now apply the modeling framework introduced above to three representative gene regulatory networks. Throughout this section, \(x_i(t)\in\mathbb{R}_+\) denotes the concentration of protein \(i\), and \(\gamma_i>0\) denotes its degradation rate. The switching models are written directly in terms of their production functions, using the Heaviside function \(H\) introduced in \eqref{eq:glass}. When continuous simulations are needed, the discontinuous switches are smoothed by replacing each activating term \(H(x_j-\theta_{ij})\) with \(f^+_{ij}(x_j)\), and each repressing term \(H(\theta_{ij}-x_j)\) with \(f^-_{ij}(x_j)\).
+
+\subsection{Example 1: Toggle Switch}
+
+
+
+We first consider a genetic toggle switch in which two genes repress each other, a classical mechanism for bistability \cite{gardner2000construction}. The state variable is \(x=(x_1,x_2)\in\mathbb{R}_+^2\), where \(x_1\) and \(x_2\) represent the expression levels of the two genes. Since both interactions are repressing, each gene is produced at a high rate when the other gene is below threshold and at a low rate when the other gene is above threshold. The switching system is
+\begin{figure}[H]
+\centering
+
+\begin{minipage}{0.68\linewidth}
+\begin{equation}
+\begin{aligned}
+\frac{dx_1}{dt}
+&=
+-\gamma_1x_1
++
+L_1+(U_1-L_1)H(\theta_2-x_2),\\
+\frac{dx_2}{dt}
+&=
+-\gamma_2x_2
++
+L_2+(U_2-L_2)H(\theta_1-x_1).
+\end{aligned}
+\end{equation}
+\end{minipage}
+\hfill
+\begin{minipage}{0.25\linewidth}
+\centering
+\includegraphics[width=0.3\linewidth]{Figures/example_1_toggle_switch_dsgrn_network_graph.png}
+\caption{Enter Caption}
+\label{fig:placeholder}
+\end{minipage}
+
+\end{figure}
+
+The qualitative switching structure is determined by the inequalities
+\begin{equation}\label{Example 1 inequalities}
+    0<L_i<\gamma_i\theta_i<U_i,
+    \qquad i=1,2.
+\end{equation}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.15\linewidth]{Figures/image5.png}
+    \caption{Enter Caption}
+    \label{fig:placeholder}
+\end{figure}
+These inequalities place each threshold between the low and high equilibrium production levels. Consequently, the model admits two stable expression states, corresponding to the dominance of one gene and repression of the other. The separating structure between the two basins appears as an unstable saddle-like switching region. In the combinatorial analysis, these regions are represented as distinct Morse sets. For the numerical computations, we take \(\gamma_i=1.0\), \(\theta_i=3.0\), \(L_i=1.0\), and \(U_i=5.0\), for \(i=1,2\).
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{Figures/example_1_toggle_switch_conley_morse_sets_and_embedded_graph_2d.png}
+    \caption{ In the embedded graph, green FP nodes have Conley index CI=(1,0,0), and the yellow SP node has CI=(0,1,0); directed edges indicate the Morse graph order.}
+    \label{fig:placeholder}
+\end{figure}
+\subsection{Example 2: Mixed Feedback Network}
+
+The second example is a two-gene network with mixed feedback. The variable \(x_1\) is self-activating and is also activated by \(x_2\), while \(x_2\) is self-activating and repressed by \(x_1\). This network combines positive and negative feedback and can support several qualitative regimes. For the \(x_1\)-equation, the two activating inputs are combined additively, corresponding to an OR-type regulatory rule. For the \(x_2\)-equation, repression by \(x_1\) and self-activation by \(x_2\) act jointly, so their effects are modeled multiplicatively. The switching system is
+
+
+\begin{figure}[H]
+\centering
+
+\begin{minipage}{0.70\linewidth}
+\begin{equation}\label{piecewise system, Example 2}
+\begin{aligned}
+\frac{dx_1}{dt}
+&=
+-\gamma_1x_1
++
+\bigl(L_{11}+(U_{11}-L_{11})H(x_1-\theta_{11})\bigr)
++
+\bigl(L_{21}+(U_{21}-L_{21})H(x_2-\theta_{21})\bigr),\\
+\frac{dx_2}{dt}
+&=
+-\gamma_2x_2
++
+\bigl(L_{12}+(U_{12}-L_{12})H(\theta_{12}-x_1)\bigr)
+\bigl(L_{22}+(U_{22}-L_{22})H(x_2-\theta_{22})\bigr).
+\end{aligned}
+\end{equation}
+\end{minipage}
+\hfill
+\begin{minipage}{0.22\linewidth}
+\centering
+\includegraphics[width=0.4\linewidth]{Figures/example_2_two_node_mixed_activation_repression_dsgrn_network_graph.png}
+\caption{Caption}
+\label{fig:example-2-network}
+\end{minipage}
+
+\end{figure}
+
+
+For this network, DSGRN identifies \(1600\) parameter nodes in the associated parameter graph. We work with parameter node \(712\), and the numerical parameters are sampled from this node. This node imposes the threshold orderings \(0<\theta_{12}<\theta_{11}\) and \(0<\theta_{21}<\theta_{22}\). Therefore, the phase space is divided into the nine modes \(\mathcal{R}_{ij}=I_i^{(1)}\times I_j^{(2)}\), where \(i,j\in\{0,1,2\}\). Here
+\[
+I_0^{(1)}=(0,\theta_{12}),\qquad
+I_1^{(1)}=(\theta_{12},\theta_{11}),\qquad
+I_2^{(1)}=(\theta_{11},\infty),
+\]
+and
+\[
+I_0^{(2)}=(0,\theta_{21}),\qquad
+I_1^{(2)}=(\theta_{21},\theta_{22}),\qquad
+I_2^{(2)}=(\theta_{22},\infty).
+\]
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Figures/example_2_two_node_mixed_activation_repression_conley_morse_sets_and_embedded_graph_2d.png}
+    \caption{Conley Morse sets in phase space with the corresponding embedded Conley Morse graph. Legend: green FP = CI(1,0,0), yellow SP = CI(0,1,0), red REP = CI(0,0,1), and blue MS = CI(0,0,0). Arrows in phase space show the combinatorial flow; graph arrows show transitions between Morse sets.}
+    \label{fig:placeholder}
+\end{figure}
+The selected node is characterized by the inequalities
+\begin{equation}\label{Example 2 inequalities}
+\begin{aligned}
+&L_{11}+L_{21}
+<
+\theta_{12}
+<
+L_{11}+U_{21}
+<
+\theta_{11}
+<
+U_{11}+L_{21}
+<
+U_{11}+U_{21},\\
+&L_{12}L_{22}
+<
+\theta_{21}
+<
+U_{12}L_{22}
+<
+\theta_{22}
+<
+L_{12}U_{22}
+<
+U_{12}U_{22},\\
+&0<L_{11}<U_{11},
+\qquad
+0<L_{21}<U_{21},
+\qquad
+0<\theta_{12}<\theta_{11},\\
+&0<L_{12}<U_{12},
+\qquad
+0<L_{22}<U_{22},
+\qquad
+0<\theta_{21}<\theta_{22}.
+\end{aligned}
+\end{equation}
+These inequalities specify the relative ordering of thresholds and production levels. They also encode the distinction between additive regulation of \(x_1\) and multiplicative regulation of \(x_2\). The continuous version used in the simulations is obtained from \eqref{piecewise system, Example 2} by replacing the activating switches with \(f^+\) and the repressing switch with \(f^-\), preserving the same regulatory signs and threshold ordering while smoothing the discontinuous transitions.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{Figures/image8.png}
+    \caption{Caption}
+    \label{fig:placeholder}
+\end{figure}
+\subsection{Example 3: Repressilator}
+
+The third example is a three-gene cyclic repression network. In this model, \(x_3\) represses \(x_1\), \(x_1\) represses \(x_2\), and \(x_2\) represses \(x_3\). This is the repressilator architecture, which is known to support oscillatory behavior under appropriate parameter conditions.
+
+Because each equation contains one repressing input, each production term switches from a high value to a low value when the corresponding regulator crosses its threshold. The switching system is
+\begin{figure}[H]
+\centering
+
+\begin{minipage}{0.70\linewidth}
+\begin{equation}\label{piecewise system, Example 3}
+\begin{aligned}
+\frac{dx_1}{dt}
+&=
+-\gamma_1x_1
++
+L_{31}+(U_{31}-L_{31})H(\theta_{31}-x_3),\\
+\frac{dx_2}{dt}
+&=
+-\gamma_2x_2
++
+L_{12}+(U_{12}-L_{12})H(\theta_{12}-x_1),\\
+\frac{dx_3}{dt}
+&=
+-\gamma_3x_3
++
+L_{23}+(U_{23}-L_{23})H(\theta_{23}-x_2).
+\end{aligned}
+\end{equation}
+\end{minipage}
+\hfill
+\begin{minipage}{0.22\linewidth}
+\centering
+\includegraphics[width=0.4\linewidth]{Figures/example_3_three_node_repressing_cycle_embedded_conley_morse_graph_3d.png}
+\caption{Caption}
+\label{fig:example-3-network}
+\end{minipage}
+
+\end{figure}
+
+
+For this network, DSGRN identifies \(27\) parameter nodes. We work with parameter node \(13\), and the simulation parameters are sampled from this node. Since each variable has one threshold, the phase space is divided into eight modes \(\mathcal{R}_{ijk}=I_i^{(1)}\times I_j^{(2)}\times I_k^{(3)}\), where \(i,j,k\in\{0,1\}\). Here \(I_0^{(1)}=(0,\theta_{12})\), \(I_1^{(1)}=(\theta_{12},\infty)\), \(I_0^{(2)}=(0,\theta_{23})\), \(I_1^{(2)}=(\theta_{23},\infty)\), \(I_0^{(3)}=(0,\theta_{31})\), and \(I_1^{(3)}=(\theta_{31},\infty)\).
+
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}[t]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{Figures/image11.png}
+        \caption{}
+        \label{fig:image11}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.62\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{Figures/example_3_three_node_repressing_cycle_embedded_conley_morse_graph_3d.png}
+        \caption{}
+        \label{fig:embedded_3d_conley_morse_graph}
+    \end{subfigure}
+
+    \caption{Embedded 3D Conley Morse graph for the repressing cycle. The blue ring labeled MS/LC denotes the limit-cycle Morse set, CI=$(1,1,0,0)$, and the red REP node denotes the repeller, CI=$(0,0,1,0)$. The directed edge shows the connection from the repeller to the limit-cycle Morse set.}
+    \label{fig:repressing_cycle_conley_morse_side_by_side}
+\end{figure}
+
+The defining inequalities for parameter node \(13\) are
+\begin{equation}\label{Example 3 inequalities}
+\begin{aligned}
+&L_{31}<\theta_{12}<U_{31},\\
+&L_{12}<\theta_{23}<U_{12},\\
+&L_{23}<\theta_{31}<U_{23},\\
+&0<L_{31}<U_{31},
+\qquad
+0<L_{12}<U_{12},
+\qquad
+0<L_{23}<U_{23},\\
+&0<\theta_{12},
+\qquad
+0<\theta_{23},
+\qquad
+0<\theta_{31}.
+\end{aligned}
+\end{equation}
+These inequalities place each threshold between the corresponding low and high production levels of the regulating variable. This is the parameter condition that produces the cyclic switching pattern represented by the selected DSGRN node. The continuous version used in the simulations is obtained by replacing each repressing switch in \eqref{piecewise system, Example 3} with the corresponding \(f^-\) term, which preserves the cyclic regulatory structure while smoothing the threshold transitions.
+
+\section{Physics-Informed Neural Networks}
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{Figures/ChatGPT Image Jun 12, 2026, 05_59_40 PM.png}
+    \caption{Enter Caption}
+    \label{fig:placeholder}
+\end{figure}
+Artificial neural networks (NNs) were first introduced as mathematical models of biological neurons through the foundational work of McCulloch and Pitts \cite{mcculloch1943logical}, and later formalized by Rosenblatt through the perceptron model \cite{rosenblatt1958perceptron}. Since then, neural networks have become one of the central tools in modern machine learning due to their strong approximation capabilities and flexibility in representing highly nonlinear functions \cite{goodfellow2016deep}. In particular, the universal approximation theorem established that sufficiently wide feedforward neural networks can approximate continuous functions on compact domains with arbitrary accuracy under mild assumptions \cite{cybenko1989approximation,hornik1991approximation}.
+
+Given observed data \(\{(z_i,y_i)\}_{i=1}^{\mathscr{N}}\), with \(z_i \in \mathbb{R}^{d}\) and \(y_i \in \mathbb{R}^{m}\), a standard feedforward neural network seeks to approximate the nonlinear mapping \(u_{\theta}(z) \approx y\), where \(\theta\) denotes the trainable parameters of the network.
+
+Let the network consist of \(k\) hidden layers. The network is defined recursively by
+\begin{align}
+L_1 &= \phi_1\!\left(W_1 z + b_1\right), \\
+L_i &= \phi_i\!\left(W_i L_{i-1} + b_i\right), \qquad i=2,\dots,k, \\
+u_{\theta}(z) &= \phi_{k+1}\!\left(W_{k+1}L_k + b_{k+1}\right),
+\end{align}
+where \(W_i\) and \(b_i\) denote the weights and biases of the \(i\)th layer, and \(\phi_i\) is the corresponding activation function. More precisely, \(W_i \in \mathbb{R}^{\ell_{i,1}\times \ell_{i,2}}\) and \(b_i \in \mathbb{R}^{\ell_{i,2}}\), where \(\ell_{i,1}\) and \(\ell_{i,2}\) represent the dimensions of consecutive layers. The quantity \(\ell_{0,2}\) denotes the dimension of the input space, while \(\ell_{k+1,2}\) gives the dimension of the output space.
+
+A purely data-driven neural network is trained by minimizing only the discrepancy between predictions and observations. However, in scientific applications, data are often sparse, noisy, or only partially observed. More importantly, such models do not guarantee consistency with the underlying physical laws governing the system. 
+
+To address this limitation, physics-informed neural networks (PINNs), introduced by Raissi, Perdikaris, and Karniadakis \cite{raissi2019physics}, incorporate the governing differential equations directly into the training process. Instead of relying solely on observational data, PINNs enforce both data fidelity and physical consistency by embedding the differential operator into the loss function. This creates a natural bridge between deep learning and scientific computing and has proven highly effective for forward and inverse problems involving ordinary and partial differential equations \cite{karniadakis2021physics}. In this work, we consider a system of ordinary differential equations of the form
+\begin{equation}
+\frac{dx}{dt}
+=
+\mathscr{F}(x(t),t;\mu),
+\qquad
+t \in \mathbb{R}^{+},
+\qquad
+x(t)\in\mathbb{R}^{n},
+\label{eq:pinn_system}
+\end{equation}
+where \(\mathscr{F}\) denotes the nonlinear governing vector field and \(\mu\) represents the unknown model parameters to be identified. Let \(x_i = x(t_i)\) for \(i=1,2,\dots,\mathscr{N}\) denote the observed trajectory data. We construct a neural network
+\begin{equation}
+u_{\theta}(t,x_0)
+:
+\mathbb{R}^{+}\times\mathbb{R}^{n}
+\rightarrow
+\mathbb{R}^{n},
+\end{equation}
+where the input consists of the normalized time variable \(t\) together with the initial condition \(x_0 = x(0)\), and the output is the reconstructed trajectory. We write \(u_i = u_{\theta}(t_i,x_0)\) for the network prediction at the observed data points. The network parameters are learned by minimizing a weighted combination of a data mismatch loss, a physics residual loss, and an initial-condition loss:
+\begin{equation}
+\mathrm{MSE}_{x}
+=
+\frac{1}{\mathscr{N}}
+\sum_{i=1}^{\mathscr{N}}
+\left\|
+u_i - x_i
+\right\|^2,
+\end{equation}
+
+\begin{equation}
+\mathrm{MSE}_{\mathscr{F}}
+=
+\frac{1}{\mathscr{M}}
+\sum_{j=1}^{\mathscr{M}}
+\left\|
+\frac{d}{dt}u_{\theta}(t_j^{(f)},x_0)
+-
+\mathscr{F}
+\left(
+u_{\theta}(t_j^{(f)},x_0),
+t_j^{(f)};
+\mu
+\right)
+\right\|^2,
+\end{equation}
+
+\begin{equation}
+\mathrm{MSE}_{0}
+=
+\left\|
+u_{\theta}(0,x_0)-x_0
+\right\|^2,
+\end{equation}
+
+and
+\begin{equation}
+\mathcal{L}_{\mathrm{total}}
+=
+\lambda_x\,\mathrm{MSE}_{x}
++
+\lambda_{\mathscr{F}}\,\mathrm{MSE}_{\mathscr{F}}
++
+\lambda_0\,\mathrm{MSE}_{0}.
+\label{eq:total_loss}
+\end{equation}
+
+Here, \(\mathrm{MSE}_{x}\) enforces agreement between the network prediction and the observed trajectories, while \(\mathrm{MSE}_{\mathscr{F}}\) measures the residual of the governing differential equation evaluated at \(\mathscr{M}\) collocation points. These collocation points may be selected randomly throughout the domain or chosen to coincide with observation times. The term \(\mathrm{MSE}_{0}\) guarantees consistency with the prescribed initial condition at \(t=0\). The weights \(\lambda_x\), \(\lambda_{\mathscr{F}}\), and \(\lambda_0\) balance data fidelity, physical consistency, and initial-condition enforcement. PINNs rely on automatic differentiation to evaluate the derivative \(\frac{d}{dt}u_{\theta}\) by repeatedly applying the chain rule through the computational graph of the network. This enables direct optimization of the physics residual without requiring finite-difference approximations. In practice, training commonly combines Adam for rapid early convergence with L-BFGS for final local refinement. Both optimizers can simultaneously learn the network parameters and the unknown physical parameters, making PINNs highly effective for parameter estimation in inverse problems.
+
+\medskip
+\noindent\textbf{Remark.}
+A schematic illustration of the PINN workflow should include observed trajectories, collocation points for residual evaluation, the neural network architecture, automatic differentiation for derivative computation, and the composite loss structure defined in \eqref{eq:total_loss}.
+
+
+
+\subsection{Spectral Bias and Feature Mapping}
+
+Although PINNs incorporate physical constraints directly into the learning process, they often remain difficult to train when the target solution contains high-frequency components, localized structures, or sharp transient behavior. In practice, standard neural networks tend to learn low-frequency components first and resolve finer oscillatory patterns only at later stages of training. This phenomenon, commonly referred to as \emph{spectral bias}, has been studied both in the neural-network literature and in the context of Fourier feature mappings \cite{rahaman2019spectral,tancik2020fourier,ding2025physicsinformedneuralnetworksfourier}.
+
+To reduce the underrepresentation of high-frequency content, we enrich the input representation through a feature mapping. Instead of supplying the raw input \(z\) directly to the first hidden layer, we define
+\begin{align}
+L_1 &= \phi_1\!\left(W_1 \gamma(z)+b_1\right), \\
+L_i &= \phi_i\!\left(W_iL_{i-1}+b_i\right), \qquad i=2,\dots,k-1, \\
+\psi(z) &= \phi_k\!\left(W_kL_{k-1}+b_k\right),
+\end{align}
+where \(\gamma\) denotes the selected feature mapping. In this way, the network operates on a transformed representation of the input, which improves its ability to approximate oscillatory, localized, and multiscale solution features. In the present work, we employ a Fourier feature mapping for this purpose.
+
+\textbf{Fourier Feature Mapping.}
+
+A natural way to enrich the input representation is to map \(z\) into a higher-dimensional trigonometric feature space. Specifically, instead of feeding the raw input \(z\) into the network, we define
+\begin{equation}
+\gamma(z)=
+\begin{bmatrix}
+\cos(Az) \\
+\sin(Az)
+\end{bmatrix},
+\end{equation}
+where \(z\in\mathbb{R}^{n}\) and \(A\in\mathbb{R}^{b\times n}\) is a frequency matrix containing \(b\) frequencies across the input dimensions. This transformation broadens the frequency content presented to the network and improves its ability to represent highly oscillatory functions within the PINN framework \cite{tancik2020fourier}.
+
+For ODE problems, the network input is restricted to \(z=(t,x_0)\), where \(x_0=x(0)\in\mathbb{R}^{\mathscr{n}}\), and \(\mathscr{n}\) denotes the dimension of the dynamical system. In particular, the temporal coordinate \(t\) is projected into a higher-dimensional feature space through linearly spaced angular frequencies \(\omega_k=2\pi a_k\), where
+\[
+a_k\in\{1,\,1+\Delta,\,1+2\Delta,\dots,a_{\max}\},
+\]
+and
+\[
+\Delta =
+\begin{cases}
+\dfrac{a_{\max}-1}{\mathscr{n}_a-1}, & \mathscr{n}_a>1, \\[1.2ex]
+0, & \mathscr{n}_a=1.
+\end{cases}
+\]
+Here, \(\mathscr{n}_a\) denotes the number of frequency components and \(a_{\max}\) specifies the maximum frequency. Following the construction introduced in \cite{tancik2020fourier}, this encoding allows the network to access a richer set of oscillatory modes at the input level, thereby mitigating the strong low-frequency preference of standard multilayer perceptrons.
+In addition to Fourier features, we also experimented with radial basis function (RBF) embeddings \cite{hardy1971multiquadric,micchelli1986interpolation} and linear B-spline mappings \cite{Schumaker2007}, which offer complementary advantages for representing localized and non-periodic structures. However, across our trials these embeddings did not yield consistent improvements over Fourier features for the dynamical systems considered, and we therefore adopted the Fourier feature mapping as the primary embedding in this work.
+
+\subsection{Learnable Feature Mappings}
+
+An important extension is to incorporate the feature map directly into the trainable architecture rather than treating it as a fixed preprocessing step. In this setting, the parameters defining the feature map are promoted to learnable variables and are optimized jointly with the backbone network. Consequently, the feature representation adapts to the problem during training instead of remaining fixed a priori.
+
+To express this mathematically, let the feature map depend on an additional parameter set \(\vartheta_{\gamma}\), so that \(\gamma(z)=\gamma(z;\vartheta_{\gamma})\), and let the backbone network be parameterized by \(\vartheta_{\psi}\). The full model may then be written as \(\psi(z)=\psi(z;\vartheta_{\psi},\vartheta_{\gamma})\), with
+\[
+L_1=\phi_1\!\left(W_1\gamma(z;\vartheta_{\gamma})+b_1\right),
+\]
+and
+\[
+L_j=\phi_j\!\left(W_jL_{j-1}+b_j\right), \qquad j=2,\dots,k-1.
+\]
+The trainable parameter set is therefore
+\[
+\Theta=\{\vartheta_{\psi},\vartheta_{\gamma}\},
+\]
+and if \(\mathscr{L}(\Theta)\) denotes the total training loss, then optimization is performed over both components simultaneously:
+\begin{equation}
+\Theta^{*}
+=
+\arg\min_{\Theta}\mathscr{L}(\Theta).
+\end{equation}
+
+During backpropagation, gradients pass through both the backbone and the feature map, so the update of the feature-map parameters is governed by
+\begin{equation}
+\vartheta_{\gamma}^{(m+1)}
+=
+\vartheta_{\gamma}^{(m)}
+-
+\eta \nabla_{\vartheta_{\gamma}} \mathscr{L}(\Theta^{(m)}),
+\end{equation}
+where \(\eta>0\) denotes the learning rate. By the chain rule,
+\[
+\nabla_{\vartheta_{\gamma}} \mathscr{L}
+=
+\frac{\partial \mathscr{L}}{\partial \psi}
+\frac{\partial \psi}{\partial \gamma}
+\frac{\partial \gamma}{\partial \vartheta_{\gamma}},
+\]
+which makes clear that the loss depends not only on the network output, but also on how the feature map itself transforms the input.
+
+In the Fourier case, the frequency matrix \(A\) may be taken as trainable, so that the frequencies are learned from the optimization process rather than fixed in advance, allowing the embedding to concentrate around the dominant spectral content of the target solution. This learnable formulation improves flexibility and often leads to better conditioning of the optimization problem. Rather than forcing the backbone network to compensate for a poorly chosen static embedding, the model can refine the feature representation itself so that it aligns more effectively with the dominant frequencies and multiscale structures present in the solution.
+
+In addition to this learnable feature representation, we experimented with several neural network architectures and training configurations in order to improve loss reduction and parameter convergence. These experiments included variations in width, depth, and architecture type, including FNN, ResNet, and SIREN, as well as different choices of physics and data loss weights, regularization strengths, learning rates, and the number of features used in the Fourier feature maps. We also investigated the choice of initial conditions and the number of trajectories, among other design parameters.
+
+\section{Workflow and code simulation}
+
+We simulate trajectory data from a known dynamical system and then use only those trajectories as observations in the inverse problem. The PINN is trained to recover \(L\), \(U\), \(\theta\), and \(d\) from the simulated data while enforcing the governing ODE, so that the learned parameters can be used to identify the associated DSGRN region. In this way, we test whether the trajectory information is sufficient to recover the underlying switching structure from the dynamics alone. In the implementation, we experimented with multiple network widths and depths, learning rates, numbers of training steps, collocation points, final times, feature-map settings, and relative weights for the data, physics, and initial-condition losses. For each configuration, the code generates the corresponding dataset, trains the PINN, and records the inferred parameters and resulting trajectory fit.\\
+
+Multiple trajectories are generated from initial conditions sampled by Latin hypercube sampling over the state-space domain. This gives broader coverage of the phase space, captures both transient and long-time behavior more effectively, and reduces the risk that inference is determined by only a narrow family of trajectories. A key implementation detail is the positive parametrization of the trainable regulatory terms. The trainable entries of \(L\), \(U\), and \(\theta\) are represented through
+\[
+p = r^2 + \varepsilon, \qquad \varepsilon = 10^{-6}.
+\]
+This is preferable to clamping, which can trap parameters at the boundary and destroy useful gradients, and also preferable to softplus here, since softplus becomes too flat near zero and can make very small positive parameters harder to learn accurately. The map \(r^2+\varepsilon\) preserves positivity while still allowing efficient learning of values close to zero. Noise is introduced at the data-generation stage by adding bounded uniform perturbations to each state component, scaled relative to a characteristic non-zero gap between the bounding parameters. Specifically, this gap is defined as the minimum of the same-index parameter differences 
+$min|L_{ij}-U_{ij}|$ and the smallest non-zero $L$ threshold.  This choice is natural in the DSGRN setting, since neighboring parameter regions are separated by inequalities involving these specific thresholds. Small perturbations scaled by this gap should therefore preserve the qualitative regime, while perturbations of comparable size may push the inferred parameters across region boundaries. Specifically, uniform noise with absolute bounds  $[-ub,ub]$, calculated as a percentage of this characteristic scale, is added to the simulated coordinates. Upon adding noise, if certain trajectory points become negative, we appropriately clamp them to $0$.
+
+\begin{remark}
+    We note here that PINN is highly dependent on how we learn the data. For instance, despite having a low physics loss, it is computed relative to the formed trajectories simulated by the NN, and would hereby not provide accurate answers when needed. the physics learning is highly dependent on the data learning, and we therefore tended to increase the data loss to better mimic the trajectories in teh data. Doing so provided us with more accurate results.
+\end{remark}
+\section{results}
+
+\subsection{hyperparameters:}
+
+The same baseline neural-network architecture was used across the three exercises. In each case, the network consisted of four hidden layers with \(32\) neurons per layer, denoted by \(32\times 4\), and the learning rate was fixed at \(0.001\). For every prescribed noise upper bound, \(100\) independent trials were generated using different trajectory initial-condition seeds and different neural-network initialization seeds. The noise upper bounds considered were \(0\%,1\%,5\%,10\%,25\%\), and \(50\%\).
+
+For Exercise 1, which is the simplest of the three examples, the training data consisted of \(5\) trajectories with \(25\) points sampled along each trajectory, and the final simulation time was set to \(t_{\mathrm{final}}=5\). The loss weights were chosen as \(5\) for the data loss, \(1\) for the physics loss, and \(0.001\) for the initial-condition loss. For each trial, the model was trained for \(5000\) epochs.
+
+For Exercise 2, the same noise levels, loss weights, and number of independent trials were used. Since this example has a larger parameter set and more complex dynamics, the data set was increased to \(15\) trajectories with \(40\) points per trajectory, while keeping \(t_{\mathrm{final}}=5\). The training procedure was also extended to \(8000\) Adam epochs followed by \(3000\) L-BFGS iterations.
+
+For Exercise 3, the loss weights were scaled to \(50\) for the data loss, \(10\) for the physics loss, and \(0.01\) for the initial-condition loss. This preserves the same relative balance among the three loss terms used in Exercise 1. Because this example exhibits periodic behavior, a Fourier feature map was enabled, with parameters \(\omega_0=12\) and \(a_{\max}=4\).
+
+
+\subsection{Collected Parameters}
+
+
+
+\subsubsection{Ex 1}
+
+\begin{figure}[htbp]
+    \centering
+
+    % Row 1: Example 1
+    \begin{subfigure}[t]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{Figures/ex1_jun2026_l_01_boxplot.png}
+        \caption{Example 1, \(L_{01}\)}
+        \label{fig:ex1_L01_boxplot}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{Figures/ex1_jun2026_u_01_boxplot.png}
+        \caption{Example 1, \(u_{01}\)}
+        \label{fig:ex1_u01_boxplot}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{Figures/ex1_jun2026_theta_01_boxplot.png}
+        \caption{Example 1, \(\theta_{01}\)}
+        \label{fig:ex1_theta01_boxplot}
+    \end{subfigure}
+
+    \vspace{0.3cm}
+
+    % Row 2: Example 2
+    \begin{subfigure}[t]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{Figures/ex2_l_01_boxplot.png}
+        \caption{Example 2, \(L_{01}\)}
+        \label{fig:ex2_L01_boxplot}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{Figures/ex2_u_01_boxplot.png}
+        \caption{Example 2, \(u_{01}\)}
+        \label{fig:ex2_u01_boxplot}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{Figures/ex2_theta_01_boxplot.png}
+        \caption{Example 2, \(\theta_{01}\)}
+        \label{fig:ex2_theta01_boxplot}
+    \end{subfigure}
+
+    \vspace{0.3cm}
+
+    % Row 3: Example 3
+    \begin{subfigure}[t]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{Figures/ex3_l_01_boxplot.png}
+        \caption{Example 3, \(L_{01}\)}
+        \label{fig:ex3_L01_boxplot}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{Figures/ex3_u_01_boxplot.png}
+        \caption{Example 3, \(u_{01}\)}
+        \label{fig:ex3_u01_boxplot}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{Figures/ex3_theta_01_boxplot.png}
+        \caption{Example 3, \(\theta_{01}\)}
+        \label{fig:ex3_theta01_boxplot}
+    \end{subfigure}
+
+    \caption{Boxplots compare parameter estimates from the PINN method (blue) and the least-squares method (orange) across noise upper levels. Boxes show the interquartile range, black horizontal bars show medians, whiskers show the non-outlier range, and faint points show individual estimates. Diamond markers indicate sample means. Dashed horizontal lines mark the true parameter values.}
+    \label{fig:boxplots_pinn_vs_ls}
+\end{figure}
+Table~\ref{tab:ex1-error-std-comparison} and row 1 of Figure~\ref{fig:boxplots_pinn_vs_ls} summarize the parameter recovery results for Exercise 1. In the clean-data case, regular least squares gives slightly smaller average errors than the PINN method. When the noise upper bound is \(0\), the least-squares average absolute error is \(0.0020499\), compared with \(0.0145812\) for PINN. The same pattern appears in the average standard deviation, where least squares gives \(0.00947153\), while PINN gives \(0.0403698\). This agrees with the boxplots, where both approaches are concentrated near the true parameter values, but the least-squares estimates are somewhat tighter when no noise is present.
+
+This advantage changes once the observations become more noisy. At noise upper bound \(50\), the PINN average absolute error is \(0.0241707\), whereas the least-squares average absolute error increases to \(0.0935375\). The difference is even more visible in the variability of the estimates. The least-squares average standard deviation increases sharply to \(0.552826\), while the PINN average standard deviation increases only to \(0.136986\). Thus, least squares is accurate in the low-noise setting, but it becomes much more sensitive to perturbations in the observations. By contrast, the PINN estimates remain more concentrated around the true values for \(L\), \(U\), and \(\theta\), indicating stronger stability under noisy data.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{|c|c|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|}
+\hline
+\textbf{Noise UB} &
+\textbf{Parameters} &
+\textbf{PINN Avg. Abs. Error} &
+\textbf{LS Avg. Abs. Error} &
+\textbf{PINN Avg. Std.} &
+\textbf{LS Avg. Std.} &
+\textbf{DSGRN Parameter Region Recovery Success Rate} \\
+\hline
+
+\(0\) & \(6\)
+& \textcolor{red}{\(0.0145812\)}
+& \textcolor{green!50!black}{\(0.0020499\)}
+& \textcolor{red}{\(0.0403698\)}
+& \textcolor{green!50!black}{\(0.00947153\)}
+& \textcolor{green!50!black}{\(100\%\)} \\
+\hline
+
+\(50\) & \(6\)
+& \textcolor{green!50!black}{\(0.0241707\)}
+& \textcolor{red}{\(0.0935375\)}
+& \textcolor{green!50!black}{\(0.136986\)}
+& \textcolor{red}{\(0.552826\)}
+& \textcolor{green!50!black}{\(100\%\)} \\
+\hline
+
+\end{tabularx}
+\caption{Comparison of the average absolute error, average standard deviation, and DSGRN parameter region recovery success rate for PINN and least squares in Exercise 1 at noise upper bounds \(0\) and \(50\). Green values indicate the better result in each comparison, while red values indicate the worse result.}
+\label{tab:ex1-error-std-comparison}
+\end{table}
+
+\subsubsection{Ex 2}
+
+The results for Exercise 2 are reported in Table~\ref{tab:ex2-error-std-comparison} and row 2 of Figure~\ref{fig:boxplots_pinn_vs_ls}. Unlike Exercise 1, the PINN method shows a clear advantage even in the absence of observational noise. At noise upper bound \(0\), the PINN average absolute error is \(0.0852812\), while the least-squares error is \(0.454960\). The average standard deviation also favors PINN, with value \(0.043135\), compared with \(0.898019\) for least squares. This indicates that the difficulty in Exercise 2 is not caused only by noisy observations. Rather, the parameter recovery problem itself is more sensitive, and the classical least-squares fit already shows noticeable instability in the clean-data setting.
+
+The boxplots in row 2 Figure~\ref{fig:boxplots_pinn_vs_ls} provide a parameter-level view of this behavior. For the estimated quantities \(L\), \(U\), and \(\theta\), the PINN distributions are generally more concentrated near the true parameter values. The least-squares estimates, on the other hand, often display wider spreads and visible shifts away from the dashed true-value lines. This is particularly apparent for several of the \(L\)- and \(U\)-parameters, where the least-squares distributions are broader and less centered. Hence, the improvement obtained by PINN is not only an improvement in average error, but also an improvement in consistency across repeated trials.
+
+
+
+The same conclusion persists at the highest tested noise level. When the noise upper bound is \(50\), the PINN average absolute error remains small at \(0.0837797\), whereas the least-squares error remains much larger at \(0.610037\). The average standard deviation also separates the two methods: PINN gives \(0.0569452\), while least squares increases to \(1.80551\). Thus, the least-squares estimates are several times more variable than the PINN estimates under high noise.
+
+Overall, Exercise 2 suggests that the physics-informed constraint plays a central role in recovering the parameters. Since the model contains a larger parameter set and a more complex dynamical structure, fitting the observed data alone is not sufficient to obtain stable estimates. By enforcing consistency with the governing differential equations, the PINN method produces parameter values that remain closer to the true values and less sensitive to random perturbations.
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{|c|c|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|}
+\hline
+\textbf{Noise UB} &
+\textbf{Parameters} &
+\textbf{PINN Avg. Abs. Error} &
+\textbf{LS Avg. Abs. Error} &
+\textbf{PINN Avg. Std.} &
+\textbf{LS Avg. Std.} &
+\textbf{PINN DSGRN Recovery Rate} &
+\textbf{LS DSGRN Recovery Rate} \\
+\hline
+
+\(0\) & \(12\)
+& \textcolor{green!50!black}{\(0.0852812\)}
+& \textcolor{red}{\(0.454960\)}
+& \textcolor{green!50!black}{\(0.043135\)}
+& \textcolor{red}{\(0.898019\)}
+& \textcolor{red}{\(99\%\)}
+& \textcolor{green!50!black}{\(77\%\)} \\
+\hline
+
+\(50\) & \(12\)
+& \textcolor{green!50!black}{\(0.0837797\)}
+& \textcolor{red}{\(0.610037\)}
+& \textcolor{green!50!black}{\(0.0569452\)}
+& \textcolor{red}{\(1.80551\)}
+& \textcolor{green!50!black}{\(99\%\)}
+& \textcolor{red}{\(13\%\)} \\
+\hline
+
+\end{tabularx}
+\caption{Comparison of PINN and least squares for Example 2 at noise upper bounds \(0\) and \(50\). The table reports the average absolute error, average standard deviation, and DSGRN parameter region recovery success rate. Green values indicate the better result in each comparison, while red values indicate the worse result.}
+\label{tab:ex2-error-std-comparison}
+\end{table}
+\subsubsection{Ex 3}
+
+
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{|c|c|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|}
+\hline
+\textbf{Noise UB} &
+\textbf{Parameters} &
+\textbf{PINN Avg. Abs. Error} &
+\textbf{LS Avg. Abs. Error} &
+\textbf{PINN Avg. Std.} &
+\textbf{LS Avg. Std.} \\
+\hline
+
+\(0\) & \(9\)
+& \textcolor{red}{\(0.00665222\)}
+& \textcolor{green!50!black}{\(0.00142775\)}
+& \textcolor{red}{\(0.0296101\)}
+& \textcolor{green!50!black}{\(0.000721548\)} \\
+\hline
+
+\(50\) & \(9\)
+& \textcolor{red}{\(0.00693753\)}
+& \textcolor{green!50!black}{\(0.00258001\)}
+& \textcolor{red}{\(0.0305032\)}
+& \textcolor{green!50!black}{\(0.00769429\)} \\
+\hline
+
+\end{tabularx}
+\caption{Comparison of PINN and least squares for Exercise 3 at noise upper bounds \(0\) and \(50\). The table reports the average absolute error and average standard deviation. Green values indicate the better result in each comparison, while red values indicate the worse result.}
+\label{tab:ex3-error-std-comparison}
+\end{table}
+
+ Table~\ref{tab:ex3-error-std-comparison} and row 3 of Figure~\ref{fig:boxplots_pinn_vs_ls} show that Exercise 3 gives a more balanced comparison between the two methods. In this case, least squares achieves smaller average absolute errors at both noise levels shown in the table. At noise upper bound \(0\), the least-squares average absolute error is \(0.00142775\), compared with \(0.00665222\) for PINN. At noise upper bound \(50\), least squares remains smaller, with value \(0.00258001\), while PINN gives \(0.00693753\). The average standard deviation also favors least squares in this experiment.
+
+The boxplots help explain this outcome. For several parameters, including \(L_{01}\), \(L_{20}\), \(U_{20}\), \(\Theta_{01}\), and \(\Theta_{20}\), the least-squares estimates are often centered closer to the true parameter values, especially when the noise level is small or moderate. However, the PINN estimates remain reasonably stable for many parameters, and in some cases their spread changes only mildly as noise increases. This is visible for parameters such as \(L_{12}\), \(U_{12}\), \(\Theta_{01}\), and \(\Theta_{12}\). At the same time, the PINN estimates exhibit a systematic bias for certain parameters, such as overestimation of \(L_{01}\) and \(U_{20}\), and underestimation of \(\Theta_{20}\).
+
+Therefore, Exercise 3 does not show the same strong advantage for PINN that was observed in Exercise 2. Instead, it shows that least squares can be highly effective when the available data identify the parameters well. The PINN method still provides a regularized estimate constrained by the governing equations, but in this particular example that constraint does not lead to smaller numerical error. The main distinction is that least squares is closer to the true parameter values for several individual parameters, while PINN maintains a structured form of stability across the tested noise levels.
+
+\subsubsection{Low-trajectory and low-data setting}
+
+Table~\ref{tab:low-traj-low-data-comparison} summarizes the low-trajectory and low-data variants. In Exercise 1, reducing the trajectory information increases the PINN variability and lowers the PINN region recovery rate to \(0.9600\), while least squares still recovers the correct region in all trials. In Exercise 2, the reduced-data setting remains the most difficult case: the PINN recovery rate is \(0.8783\) overall and decreases to \(0.7400\) at noise upper bound \(50\), but it still gives substantially smaller average parameter error and higher region recovery than least squares, whose recovery rate is \(0.6000\) overall and \(0.1300\) at noise upper bound \(50\). In Exercise 3, the PINN remains qualitatively stable with a \(0.9500\) recovery rate, but least squares again has smaller parameter error and perfect region recovery.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.20}
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{|c|c|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|}
+\hline
+\textbf{Example} &
+\textbf{Noise UB} &
+\textbf{PINN Avg. Abs. Error} &
+\textbf{LS Avg. Abs. Error} &
+\textbf{PINN Avg. Std.} &
+\textbf{LS Avg. Std.} &
+\textbf{PINN Rate} &
+\textbf{LS Rate} \\
+\hline
+
+Example 1 & ALL
+& \(0.031065\) & \(0.028740\)
+& \(0.409362\) & \(0.259234\)
+& \(0.9600\; (576/600)\) & \(1.0000\; (600/600)\) \\
+\hline
+Example 1 & \(0\)
+& \(0.035360\) & \(0.00204967\)
+& \(0.382188\) & \(0.00947153\)
+& \(0.9600\; (96/100)\) & \(1.0000\; (100/100)\) \\
+\hline
+Example 1 & \(50\)
+& \(0.0250967\) & \(0.0935373\)
+& \(0.498026\) & \(0.552825\)
+& \(0.9600\; (96/100)\) & \(1.0000\; (100/100)\) \\
+\hline
+
+Example 2 & ALL
+& \(0.0886783\) & \(0.499174\)
+& \(0.165932\) & \(1.35280\)
+& \(0.8783\; (527/600)\) & \(0.6000\; (360/600)\) \\
+\hline
+Example 2 & \(0\)
+& \(0.0894549\) & \(0.454959\)
+& \(0.145089\) & \(0.898020\)
+& \(0.9300\; (93/100)\) & \(0.7700\; (77/100)\) \\
+\hline
+Example 2 & \(50\)
+& \(0.0889079\) & \(0.610037\)
+& \(0.197896\) & \(1.80551\)
+& \(0.7400\; (74/100)\) & \(0.1300\; (13/100)\) \\
+\hline
+
+Example 3 & ALL
+& \(0.00812858\) & \(0.00164256\)
+& \(0.0307148\) & \(0.00384231\)
+& \(0.9500\; (570/600)\) & \(1.0000\; (600/600)\) \\
+\hline
+Example 3 & \(0\)
+& \(0.00800484\) & \(0.00142761\)
+& \(0.0301045\) & \(0.000721548\)
+& \(0.9500\; (95/100)\) & \(1.0000\; (100/100)\) \\
+\hline
+Example 3 & \(50\)
+& \(0.00858786\) & \(0.00257793\)
+& \(0.0326891\) & \(0.00769428\)
+& \(0.9500\; (95/100)\) & \(1.0000\; (100/100)\) \\
+\hline
+
+\end{tabularx}
+\caption{Comparison of PINN and least squares in the low-trajectory and low-data setting. The table reports the average absolute error, average standard deviation, and DSGRN parameter region recovery rate for all noise levels combined, the clean-data case, and the highest-noise case.}
+\label{tab:low-traj-low-data-comparison}
+\end{table}
+
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{|c|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|
+>{\centering\arraybackslash}X|}
+\hline
+\textbf{Noise UB} &
+\textbf{FM PINN Rate} &
+\textbf{FM PINN Count} &
+\textbf{No FM PINN Rate} &
+\textbf{No FM PINN Count} &
+\textbf{LS Rate} &
+\textbf{LS Count} &
+\textbf{PINN Rate Diff.} &
+\textbf{Data Error Diff.} \\
+\hline
+
+ALL
+& \(0.9600\) & \(576/600\)
+& \(0.2767\) & \(166/600\)
+& \(1.0000\) & \(600/600\)
+& \(+0.6833\)
+& \(-0.027049\) \\
+\hline
+
+\(0\)
+& \(0.9600\) & \(96/100\)
+& \(0.2800\) & \(28/100\)
+& \(1.0000\) & \(100/100\)
+& \(+0.6800\)
+& \(-0.027641\) \\
+\hline
+
+\(1\)
+& \(0.9600\) & \(96/100\)
+& \(0.2800\) & \(28/100\)
+& \(1.0000\) & \(100/100\)
+& \(+0.6800\)
+& \(-0.027530\) \\
+\hline
+
+\(5\)
+& \(0.9600\) & \(96/100\)
+& \(0.2800\) & \(28/100\)
+& \(1.0000\) & \(100/100\)
+& \(+0.6800\)
+& \(-0.027683\) \\
+\hline
+
+\(10\)
+& \(0.9600\) & \(96/100\)
+& \(0.2700\) & \(27/100\)
+& \(1.0000\) & \(100/100\)
+& \(+0.6900\)
+& \(-0.027616\) \\
+\hline
+
+\(25\)
+& \(0.9600\) & \(96/100\)
+& \(0.2800\) & \(28/100\)
+& \(1.0000\) & \(100/100\)
+& \(+0.6800\)
+& \(-0.026697\) \\
+\hline
+
+\(50\)
+& \(0.9600\) & \(96/100\)
+& \(0.2700\) & \(27/100\)
+& \(1.0000\) & \(100/100\)
+& \(+0.6900\)
+& \(-0.025125\) \\
+\hline
+
+\end{tabularx}
+\caption{Comparison of Example 3 with feature mapping (FM) and without feature mapping (No FM) across noise upper bounds. The LS columns for feature mapping are omitted. The PINN rate difference is computed as FM PINN rate minus No FM PINN rate. The data error difference is computed as FM PINN mean relative data error minus No FM PINN mean relative data error, so negative values indicate lower data error with feature mapping.}
+\label{tab:ex3-feature-vs-no-feature}
+\end{table}
+
+
+\begin{figure}[H]
+\centering
+
+\begin{minipage}[t]{0.48\textwidth}
+\vspace{0pt}
+\small
+The results in Table~\ref{tab:ex3-feature-vs-no-feature} show that feature mapping plays an essential role in improving the reliability of the PINN classification in Example 3. Across all noise upper bounds, the PINN with feature mapping achieves a success rate of \(0.9600\), corresponding to \(576/600\) successful runs. In contrast, the PINN without feature mapping achieves only \(0.2767\), corresponding to \(166/600\) successful runs. Thus, feature mapping improves the overall PINN success rate by \(0.6833\).
+
+This improvement is consistent across all noise levels. For noise upper bounds \(0\), \(1\), \(5\), and \(25\), the success rate increases from approximately \(0.2800\) without feature mapping to \(0.9600\) with feature mapping. For noise upper bounds \(10\) and \(50\), the improvement is even slightly larger, increasing from \(0.2700\) to \(0.9600\). Therefore, the benefit of feature mapping is not limited to a specific noise regime; rather, it remains stable from the noise-free case to the highest noise level considered.
+
+The data error difference is also negative for every noise upper bound, meaning that the PINN with feature mapping has lower mean relative data error than the PINN without feature mapping. This indicates that feature mapping does not only improve the qualitative classification outcome, but also improves the quantitative agreement with the observed data. Overall, the comparison suggests that feature mapping helps the PINN represent the underlying structure of the solution more effectively, leading to more accurate and more stable recovery across repeated runs.
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\vspace{0pt}
+\centering
+
+\includegraphics[width=\linewidth]{Figures/x0_ex3_set326_run1.png}
+
+\vspace{0.3cm}
+
+\includegraphics[width=\linewidth]{Figures/x0_ex3_set326_run1_No_Feature_Map.png}
+
+\caption{Comparison of Example 3 with feature mapping and without feature mapping. The top figure corresponds to the PINN with feature mapping, while the bottom figure corresponds to the PINN without feature mapping.}
+\label{fig:ex3-feature-vs-no-feature}
+\end{minipage}
+
+\end{figure}
+\subsection{Dynamics learned}
+
+The right-region success rates in Table~\ref{tab:right-region-success-combined} provide a qualitative measure of whether the recovered parameters preserve the correct dynamical regime. This is different from measuring parameter error alone. A trial is successful if the estimated parameters fall in the same DSGRN parameter region as the true parameters. Therefore, the question is not only whether the numerical values are close, but whether the learned parameters lead to the same qualitative biological behavior. This distinction is important because different parameter regions may correspond to different long-term outcomes, such as persistence, extinction, oscillations, or changes in stability.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{5pt}
+\caption{Right-region success rates for PINN and least-squares estimation across the three examples.}
+\label{tab:right-region-success-combined}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+\textbf{Example} & \textbf{Noise UB} & \textbf{PINN Rate} & \textbf{PINN Count} & \textbf{LS Rate} & \textbf{LS Count} & \textbf{Gap} \\
+\hline
+
+\multirow{7}{*}{Example 1}
+& ALL & 1.0000 & 600/600 & 1.0000 & 600/600 & 0.0000 \\
+& 0   & 1.0000 & 100/100 & 1.0000 & 100/100 & 0.0000 \\
+& 1   & 1.0000 & 100/100 & 1.0000 & 100/100 & 0.0000 \\
+& 5   & 1.0000 & 100/100 & 1.0000 & 100/100 & 0.0000 \\
+& 10  & 1.0000 & 100/100 & 1.0000 & 100/100 & 0.0000 \\
+& 25  & 1.0000 & 100/100 & 1.0000 & 100/100 & 0.0000 \\
+& 50  & 1.0000 & 100/100 & 1.0000 & 100/100 & 0.0000 \\
+\hline
+
+\multirow{7}{*}{Example 2}
+& ALL & 0.9867 & 592/600 & 0.6000 & 360/600 & 0.3867 \\
+& 0   & 0.9900 & 99/100  & 0.7700 & 77/100 & 0.2200 \\
+& 1   & 0.9900 & 99/100  & 0.7400 & 74/100 & 0.2500 \\
+& 5   & 0.9900 & 99/100  & 0.7900 & 79/100  & 0.2000 \\
+& 10  & 0.9900 & 99/100  & 0.7200 & 72/100  & 0.2700 \\
+& 25  & 0.9700 & 97/100  & 0.4500 & 45/100  & 0.5200 \\
+& 50  & 0.9900 & 99/100  & 0.1300 & 13/100  & 0.8600 \\
+\hline
+
+\multirow{7}{*}{Example 3}
+& ALL & 0.9600 & 576/600 & 1.0000 & 600/600 & -0.0400 \\
+& 0   & 0.9600 & 96/100  & 1.0000 & 100/100 & -0.0400 \\
+& 1   & 0.9600 & 96/100  & 1.0000 & 100/100 & -0.0400 \\
+& 5   & 0.9600 & 96/100  & 1.0000 & 100/100 & -0.0400 \\
+& 10  & 0.9600 & 96/100  & 1.0000 & 100/100 & -0.0400 \\
+& 25  & 0.9600 & 96/100  & 1.0000 & 100/100 & -0.0400 \\
+& 50  & 0.9600 & 96/100  & 1.0000 & 100/100 & -0.0400 \\
+\hline
+\end{tabular}
+\end{table}
+
+In Example 1, both PINN and least squares recover the correct parameter region in every trial and at every noise level. The success rate is \(100\%\) for both methods, including the high-noise case. This indicates that the qualitative dynamics in this example are strongly identifiable from the data. Although the numerical parameter estimates become less precise under noise, especially for least squares, the estimated parameters do not cross into a different DSGRN region. Biologically, this means that the main dynamical mechanism is robustly captured, and the predicted qualitative outcome is not easily changed by the tested levels of measurement uncertainty.
+
+Example 2 has a more delicate dynamical structure. At low noise levels, both approaches usually recover the correct region, but the least-squares success rate deteriorates as the noise upper bound increases. In particular, the least-squares rate decreases to \(45/100\) when the noise upper bound is \(25\), and then to \(13/100\) when the noise upper bound is \(50\). This means that noisy observations can move the least-squares estimates into a different region of parameter space. As a result, the fitted model may still appear reasonable from a local data-fitting perspective, but it may represent a different long-term biological regime. The PINN method is much less affected by this issue, maintaining near-perfect recovery across the same noise levels. This suggests that enforcing the governing equations during learning helps protect the qualitative biological structure of the model when the data become unreliable.
+
+Example 3 shows another type of behavior. The success rates are stable across all noise levels, with least squares recovering the correct region in every trial and PINN recovering it in \(96\%\) of the trials. The important point is that neither method shows a decline in region recovery as the noise level increases. This indicates that, for this example, the qualitative biological regime is not highly sensitive to the tested observational perturbations. Even when some individual parameter estimates are biased or variable, the recovered parameters usually remain in the same dynamical region. Thus, the long-term qualitative behavior is preserved more consistently than the individual parameter values might suggest.
+
+Taken together, these results show that evaluating parameter estimation methods only through average error is not sufficient. The biological interpretation depends on whether the recovered parameters preserve the correct dynamical regime. Example 1 represents a case where the dynamics are robustly learned by both methods. Example 2 shows that noise can cause classical least squares to recover parameters in the wrong region, while PINN better preserves the governing dynamical structure. Example 3 illustrates that small numerical differences in parameter estimates do not necessarily imply a change in qualitative behavior. Therefore, the DSGRN region recovery analysis provides an essential complement to numerical error metrics, since it evaluates whether the learned model preserves the biologically meaningful dynamics of the system.
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,30 @@
+{
+  "ex1": {
+    "inequalities": "L[y->x] < T[x->y] && T[x->y] < U[y->x] && 0 < T[x->y] && 0 < L[y->x] < U[y->x] && L[x->y] < T[y->x] && T[y->x] < U[x->y] && 0 < T[y->x] && 0 < L[x->y] < U[x->y]",
+    "variables": "{L[y->x], U[y->x], T[x->y], L[x->y], U[x->y], T[y->x]}"
+  },
+  "ex2": {
+    "inequalities": "(L[x->x] + L[y->x]) < T[x->y] && T[x->x] < (U[x->x] + L[y->x]) && T[x->y] < (L[x->x] + U[y->x]) < T[x->x] && T[x->x] < (U[x->x] + U[y->x]) && 0 < T[x->y] < T[x->x] && 0 < L[x->x] < U[x->x] && 0 < L[y->x] < U[y->x] && L[x->y]*L[y->y] < T[y->x] && T[y->x] < U[x->y]*L[y->y] && U[x->y]*L[y->y] < T[y->y] && T[y->y] < L[x->y]*U[y->y] && T[y->y] < U[x->y]*U[y->y] && 0 < T[y->x] < T[y->y] && 0 < L[x->y] < U[x->y] && 0 < L[y->y] < U[y->y]",
+    "variables": "{L[x->x], L[y->x], U[x->x], U[y->x], T[x->y], T[x->x], L[x->y], L[y->y], U[x->y], U[y->y], T[y->x], T[y->y]}"
+  },
+  "ex3": {
+    "inequalities": "L[z->x] < T[x->y] && T[x->y] < U[z->x] && 0 < T[x->y] && 0 < L[z->x] < U[z->x] && L[x->y] < T[y->z] && T[y->z] < U[x->y] && 0 < T[y->z] && 0 < L[x->y] < U[x->y] && L[y->z] < T[z->x] && T[z->x] < U[y->z] && 0 < T[z->x] && 0 < L[y->z] < U[y->z]",
+    "variables": "{L[z->x], U[z->x], T[x->y], L[x->y], U[x->y], T[y->z], L[y->z], U[y->z], T[z->x]}"
+  },
+  "ex1_low_traj_low_data": {
+    "inequalities": "L[y->x] < T[x->y] && T[x->y] < U[y->x] && 0 < T[x->y] && 0 < L[y->x] < U[y->x] && L[x->y] < T[y->x] && T[y->x] < U[x->y] && 0 < T[y->x] && 0 < L[x->y] < U[x->y]",
+    "variables": "{L[y->x], U[y->x], T[x->y], L[x->y], U[x->y], T[y->x]}"
+  },
+  "ex2_low_traj_low_data": {
+    "inequalities": "(L[x->x] + L[y->x]) < T[x->y] && T[x->x] < (U[x->x] + L[y->x]) && T[x->y] < (L[x->x] + U[y->x]) < T[x->x] && T[x->x] < (U[x->x] + U[y->x]) && 0 < T[x->y] < T[x->x] && 0 < L[x->x] < U[x->x] && 0 < L[y->x] < U[y->x] && L[x->y]*L[y->y] < T[y->x] && T[y->x] < U[x->y]*L[y->y] && U[x->y]*L[y->y] < T[y->y] && T[y->y] < L[x->y]*U[y->y] && T[y->y] < U[x->y]*U[y->y] && 0 < T[y->x] < T[y->y] && 0 < L[x->y] < U[x->y] && 0 < L[y->y] < U[y->y]",
+    "variables": "{L[x->x], L[y->x], U[x->x], U[y->x], T[x->y], T[x->x], L[x->y], L[y->y], U[x->y], U[y->y], T[y->x], T[y->y]}"
+  },
+  "ex3_low_traj_low_data": {
+    "inequalities": "L[z->x] < T[x->y] && T[x->y] < U[z->x] && 0 < T[x->y] && 0 < L[z->x] < U[z->x] && L[x->y] < T[y->z] && T[y->z] < U[x->y] && 0 < T[y->z] && 0 < L[x->y] < U[x->y] && L[y->z] < T[z->x] && T[z->x] < U[y->z] && 0 < T[z->x] && 0 < L[y->z] < U[y->z]",
+    "variables": "{L[z->x], U[z->x], T[x->y], L[x->y], U[x->y], T[y->z], L[y->z], U[y->z], T[z->x]}"
+  },
+  "ex3_no_feature_map": {
+    "inequalities": "L[z->x] < T[x->y] && T[x->y] < U[z->x] && 0 < T[x->y] && 0 < L[z->x] < U[z->x] && L[x->y] < T[y->z] && T[y->z] < U[x->y] && 0 < T[y->z] && 0 < L[x->y] < U[x->y] && L[y->z] < T[z->x] && T[z->x] < U[y->z] && 0 < T[z->x] && 0 < L[y->z] < U[y->z]",
+    "variables": "{L[z->x], U[z->x], T[x->y], L[x->y], U[x->y], T[y->z], L[y->z], U[y->z], T[z->x]}"
+  }
+}
