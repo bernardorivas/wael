@@ -1,36 +1,33 @@
 # Companion notebooks - PINN parameter learning with DSGRN topological validation
 
-Standalone, Colab-ready notebooks that walk through the paper's pipeline on each test network,
-in a teaching style: sample parameters from a target DSGRN region -> simulate a steep Hill
-system -> add bounded noise -> recover `(L, U, theta, d)` with a PINN and a least-squares
-baseline -> check whether the learned parameters land back in the target region. The region
-test is the explicit DSGRN inequality system, so **no DSGRN / pychomp install is required**.
+Standalone, Colab-ready notebooks that walk through the paper's pipeline on each test network.
+The pipeline is
 
-| Notebook | Network | What it teaches | Open in Colab |
-|---|---|---|---|
-| `example1_toggle_switch.ipynb` | toggle switch (bistable) | the question, and the easy baseline | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/OWNER/REPO/blob/main/notebooks/example1_toggle_switch.ipynb) |
-| `example2_mixed_feedback.ipynb` | mixed-feedback circuit | a good fit landing in the wrong region | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/OWNER/REPO/blob/main/notebooks/example2_mixed_feedback.ipynb) |
-| `example3_repressilator.ipynb` | repressilator (oscillatory) | oscillation + Fourier feature mapping | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/OWNER/REPO/blob/main/notebooks/example3_repressilator.ipynb) |
-| `example4_conley_morse.ipynb` | repressilator, region node 13 (periodic orbit / FC) | region recovery is not topology recovery, and two tweaks that close the gap | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/OWNER/REPO/blob/main/notebooks/example4_conley_morse.ipynb) |
+1. sample parameters from a target DSGRN region,
+2. simulate a steep Hill system,
+3. add bounded noise,
+4. recover `(L, U, theta, d)` with PINN and least-squares methods,
+5. check whether the learned parameters land back in the target region.
+
+Each notebook installs DSGRN and DSGRN_utils uses them for the topological validation.
+
+| Notebook | Network | Open in Colab |
+|---|---|---|
+| `example1_toggle_switch.ipynb` | toggle switch, region 4 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bernardorivas/wael/blob/main/notebooks/example1_toggle_switch.ipynb) |
+| `example2_mixed_feedback.ipynb` | mixed-feedback 2-network, region 712 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bernardorivas/wael/blob/main/notebooks/example2_mixed_feedback.ipynb) |
+| `example3_repressilator.ipynb` | repressilator, region 13 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bernardorivas/wael/blob/main/notebooks/example3_repressilator.ipynb) |
+| `example4_conley_morse.ipynb` | 3-gene regulatory network, region 2472287 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bernardorivas/wael/blob/main/notebooks/example4_conley_morse.ipynb) |
 
 ## Running
 
-- **Colab (recommended):** click a badge above. `torch`, `numpy`, `scipy`, and `matplotlib`
-  are preinstalled, and a free GPU speeds up the PINN cells.
-- **Local:** Python 3.10-3.12 with `pip install numpy scipy matplotlib torch`.
+- **Colab (recommended):** click the link above. `torch`, `numpy`, `scipy`, and `matplotlib` are preinstalled in Google Colab; the first cell installs DSGRN and DSGRN_utils. Select a GPU runtime and the PINN runs on CUDA automatically.
+- **Local:** Python 3.10+ with `pip install numpy scipy matplotlib torch DSGRN tqdm` and `pip install git+https://github.com/marciogameiro/DSGRN_utils.git`.
 
 ## Notes
 
-- The notebooks use a **neutral initial guess** for the physical parameters
-  (`L ~ 0, U ~ 1, theta ~ 1`), not the data-generating values, so the recovery is an honest
-  test rather than an initialization at the answer.
-- Parameters and degradation are normalized with `gamma = 1`, matching the paper's examples.
-- `example4` adds a second success criterion beyond region membership: whether the learned
-  smooth model still reproduces the periodic orbit (the FC Morse set). Its parameters are a
-  real `DSGRN.ParameterSampler` draw from node 13, chosen so each threshold sits mid-interval;
-  its optional last section installs DSGRN to confirm the Morse graph directly.
-- These are clean re-implementations for teaching; the numpy/scipy parts (ODE simulation, the
-  region-inequality check, the least-squares baseline) are validated, and the PyTorch PINN
-  cells are written to run in a torch-enabled environment (Colab).
-- **Before sharing:** replace `OWNER/REPO` in this README and in each notebook's top badge
-  with the public repository path so the Colab links resolve.
+- Each notebook selects its compute device at the top: CUDA on a Colab GPU, MPS on Apple silicon, otherwise CPU. MPS is single precision, so the PINN uses float32 on GPU/MPS and float64 on CPU; the numpy simulation and least-squares baseline always run in double precision.
+- The notebooks use a neutral initial guess for the physical parameters (`L ~ 0, U ~ 1, theta ~ 1`), not the data-generating values.
+- Parameters and degradation are normalized with `gamma = 1` since a change of variables $y=\Gamma x$ is possible.
+- Trajectory initial conditions are Latin-hypercube samples over the state box.
+- Region membership is tested with DSGRN's `par_index_from_sample`: `to_matrices` packs the learned `(L, U, theta)` into DSGRN's parameter matrices and the returned region index is compared against the target node. The final section builds the Conley-Morse graph with `DSGRN_utils.ConleyMorseGraph` and compares it to the target via `DSGRN.isomorphic_morse_graphs` in case region membership differs.
+- The Colab links point to [`bernardorivas/wael`](https://github.com/bernardorivas/wael) (branch `main`, under `notebooks/`).
