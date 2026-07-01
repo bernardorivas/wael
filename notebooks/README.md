@@ -3,10 +3,10 @@
 Standalone, Colab-ready notebooks that walk through the paper's pipeline on each test network.
 The pipeline is
 
-1. sample parameters from a target DSGRN region,
+1. start from a fixed parameter set and identify the DSGRN region it lies in (the target),
 2. simulate a steep Hill system,
 3. add bounded noise,
-4. recover `(L, U, theta, d)` with PINN and least-squares methods,
+4. recover `(L, U, theta, d)` with PINN and least-squares methods, scoring only `(L, U, theta)` against the target region since DSGRN does not depend on `d`,
 5. check whether the learned parameters land back in the target region.
 
 Each notebook installs DSGRN and DSGRN_utils uses them for the topological validation.
@@ -14,9 +14,9 @@ Each notebook installs DSGRN and DSGRN_utils uses them for the topological valid
 | Notebook | Network | Open in Colab |
 |---|---|---|
 | `example1_toggle_switch.ipynb` | toggle switch, region 4 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bernardorivas/wael/blob/main/notebooks/example1_toggle_switch.ipynb) |
-| `example2_mixed_feedback.ipynb` | mixed-feedback 2-network, region 712 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bernardorivas/wael/blob/main/notebooks/example2_mixed_feedback.ipynb) |
+| `example2_mixed_2network.ipynb` | mixed-feedback 2-network, region 712 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bernardorivas/wael/blob/main/notebooks/example2_mixed_2network.ipynb) |
 | `example3_repressilator.ipynb` | repressilator, region 13 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bernardorivas/wael/blob/main/notebooks/example3_repressilator.ipynb) |
-| `example4_conley_morse.ipynb` | 3-gene regulatory network, region 2472287 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bernardorivas/wael/blob/main/notebooks/example4_conley_morse.ipynb) |
+| `example4_mixed_3network.ipynb` | 3-gene regulatory network, region 2472287 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bernardorivas/wael/blob/main/notebooks/example4_mixed_3network.ipynb) |
 
 ## Running
 
