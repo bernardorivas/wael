@@ -24,6 +24,16 @@ Each notebook installs DSGRN and DSGRN_utils uses them for the topological valid
 - **Colab (recommended):** click the link above. `torch`, `numpy`, `scipy`, and `matplotlib` are preinstalled in Google Colab; the first cell installs DSGRN and DSGRN_utils. Select a GPU runtime and the PINN runs on CUDA automatically.
 - **Local:** Python 3.10+ with `pip install numpy scipy matplotlib torch DSGRN tqdm` and `pip install git+https://github.com/marciogameiro/DSGRN_utils.git`.
 
+## Reproducing the recovery sweep
+
+Each notebook has an `HParams` config cell right after the imports — the single source of truth for every hyperparameter (model width/depth, optimizer settings, loss weights, and the sweep controls), read everywhere as `HP.<FIELD>`.
+
+- Set `HP.N_TRIALS` (default `15`) to control how many independent trials run per noise level. Each trial reuses the fixed ground-truth parameters and clean trajectories, varying only the noise-realization seed and the network-initialization seed.
+- The six noise levels are fixed to `(0, 1, 5, 10, 25, 50)%`, matching the paper.
+- The sweep runs both the PINN and the least-squares baseline and reports a region-recovery table plus a recovery-rate-vs-noise plot.
+- `HP.MAX_EPOCHS` is the main wall-clock knob (the sweep runs `N_TRIALS × 6` PINN fits); use a GPU runtime for Examples 2–4. The full-scale paper numbers use 100 trials per level (600 aggregated for Example 3); `N_TRIALS=15` is a smaller-scale reproduction.
+- Example 3 exposes `HP.USE_FEATURE_MAP` (default `True`): setting it to `False` reproduces the no-Fourier-feature-map ablation.
+
 ## Notes
 
 - Each notebook selects its compute device at the top: CUDA on a Colab GPU, MPS on Apple silicon, otherwise CPU. MPS is single precision, so the PINN uses float32 on GPU/MPS and float64 on CPU; the numpy simulation and least-squares baseline always run in double precision.
